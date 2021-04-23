@@ -1,0 +1,99 @@
+---
+title: "204 Homework 2"
+author: "Taylor Lockmann"
+date: "4/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+```{r}
+# Read in the data
+
+water_data <- read_csv(here("data", "HW2_Water.csv")) %>% 
+  clean_names()
+#View(water_data)
+
+# Exploratory visualization
+
+ggplot(data = water_data, aes(x = reduced_water_use_abatement, y = mc_agriculture))+
+  geom_point()+
+  theme_bw()
+```
+
+```{r}
+# Start building regression model
+
+lm_ag <- lm(formula = mc_agriculture ~ reduced_water_use_abatement, data = water_data)
+
+summary(lm_ag)
+#coefficients(lm_ag)
+
+# From this linear regression model we can see that our y-intercept = 1.93603, and slope = 0.51035. We can now add this line to our current plot. 
+
+ag_function <- function(x) 0.51035*x + 1.93603
+```
+
+
+```{r}
+# Repeat for all other sectors
+
+## Meat
+
+lm_meat <- lm(formula = mc_meat ~ reduced_water_use_abatement, data = water_data)
+
+coefficients(lm_meat)
+
+meat_function <- function(x) 0.37534*x + 9.4808
+
+## Industrial
+
+lm_industrial <- lm(formula = mc_industrial ~ reduced_water_use_abatement, data = water_data)
+
+coefficients(lm_industrial)
+
+industrial_function <- function(x) 1.13009*x - 26.80662
+
+## Urban
+
+lm_urban <- lm(formula = mc_urban ~ reduced_water_use_abatement, data = water_data)
+
+coefficients(lm_urban)
+
+urban_function <- function(x) 0.59713*x - 13.82868
+```
+
+```{r}
+# Now graph all the functions together
+
+ggplot(data = water_data, aes(x = reduced_water_use_abatement))+
+  stat_function(fun = ag_function,
+                color = "red")+
+  stat_function(fun = industrial_function,
+                color = "blue")+
+  stat_function(fun = meat_function,
+                color = "forestgreen")+
+  stat_function(fun = urban_function,
+                color = "coral")+
+  annotate("text", x = 40, y = 140, color = "red", label = "Agriculture: 0.51035*x + 1.93603")+
+  annotate("text", x = 40, y = 130, color = "blue", label = "Industrial: 1.13009*x - 26.80662")+
+  annotate("text", x = 40, y = 120, color = "forestgreen", label = "Meat: 0.37534*x + 9.4808")+
+  annotate("text", x = 40, y = 110, color = "coral", label = "Urban: 0.59713*x - 13.82868")+
+  theme_bw()+
+  labs(
+    y = "Marginal Cost of Abatement ($/AF)",
+    x = "Reduction in Water Use (AF)"
+  )+
+  geom_hline(aes(yintercept = 0))+
+  geom_vline(aes(xintercept = 0))
+  
+
+```
+
