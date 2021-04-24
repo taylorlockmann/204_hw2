@@ -13,6 +13,9 @@ library(tidyverse)
 library(here)
 library(janitor)
 ```
+# Part 1: Marginal abatement costs
+
+## Read in the data & exploratory viz
 
 ```{r}
 # Read in the data
@@ -28,6 +31,11 @@ ggplot(data = water_data, aes(x = reduced_water_use_abatement, y = mc_agricultur
   theme_bw()
 ```
 
+## Start building regression model
+
+Once we find the coefficients from these linear regression models, we can use them to write estimated Marginal Cost curve equations using the format $$MC = a + bA$$
+Where MC = Marginal Cost, a = y-intercept coefficient, b = slope coefficient, and A = Abatement level.
+
 ```{r}
 # Start building regression model
 
@@ -41,10 +49,9 @@ summary(lm_ag)
 ag_function <- function(x) 0.51035*x + 1.93603
 ```
 
+## Repeat for all other sectors
 
 ```{r}
-# Repeat for all other sectors
-
 ## Meat
 
 lm_meat <- lm(formula = mc_meat ~ reduced_water_use_abatement, data = water_data)
@@ -70,8 +77,9 @@ coefficients(lm_urban)
 urban_function <- function(x) 0.59713*x - 13.82868
 ```
 
+## Now graph all the functions together
+
 ```{r}
-# Now graph all the functions together
 
 ggplot(data = water_data, aes(x = reduced_water_use_abatement))+
   stat_function(fun = ag_function,
@@ -89,11 +97,84 @@ ggplot(data = water_data, aes(x = reduced_water_use_abatement))+
   theme_bw()+
   labs(
     y = "Marginal Cost of Abatement ($/AF)",
-    x = "Reduction in Water Use (AF)"
+    x = "Reduction in Water Use (AF)",
+    title = "Marginal Cost Curves"
   )+
   geom_hline(aes(yintercept = 0))+
-  geom_vline(aes(xintercept = 0))
+  geom_vline(aes(xintercept = 0))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylim(0, 150)
   
 
+```
+
+# Part 2: Demand Curves
+
+In the pollution-reduction space, the amount of pollution can be given by the equation: $$Q = \bar{Q} - A$$
+Where Q = total amount of pollution, \bar{Q} = baseline pollution level, and A = Abatement.
+
+By rearranging this equation and solving for A, we can then plug A into our equation for MC (above), and thus find that the demand curve equation is given by: $$P = a + b(\bar{Q} - Q)$$
+
+Now let's do this for each of our sectors:
+
+### Agriculture: current use = 170AF
+
+P = 1.936 + 0.510(170-Q)
+P = 88.696 - 0.510Q
+```{r}
+ag_demand <- function(x) 88.696 - 0.510*x
+```
+
+### Industrial: current use = 230AF
+
+P = -26.807 + 1.13(230 - Q)
+P = 233.093 - 1.13Q
+```{r}
+industrial_demand <- function(x) 233.093 - 1.13*x
+```
+
+### Meat: current use  = 200AF
+
+P = 9.48 + 0.375(200 - Q)
+P = 84.48 - 0.375Q
+```{r}
+meat_demand <- function(x) 84.48 - 0.375*x
+```
+
+### Urban: current use = 300AF
+
+P = -13.83 + 0.597(300 - Q)
+P = 165.27 - 0.597Q
+```{r}
+urban_demand <- function(x) 165.27 - 0.597*x
+```
+
+## Now plot all the demand curves together
+
+```{r}
+ggplot()+
+  stat_function(fun = ag_demand,
+                color = "red")+
+  stat_function(fun = industrial_demand,
+                color = "blue")+
+  stat_function(fun = meat_demand,
+                color = "forestgreen")+
+  stat_function(fun = urban_demand,
+                color = "coral")+
+  annotate("text", x = 225, y = 225, color = "red", label = "Agriculture: P = 88.696 - 0.510Q")+
+  annotate("text", x = 225, y = 210, color = "blue", label = "Industrial: P = 233.093 - 1.13Q")+
+  annotate("text", x = 225, y = 195, color = "forestgreen", label = "Meat: P = 84.48 - 0.375Q")+
+  annotate("text", x = 225, y = 180, color = "coral", label = "Urban: P = 165.27 - 0.597Q")+
+  theme_bw()+
+  labs(
+    y = "Price ($)",
+    x = "Water Use (AF)",
+    title = "Demand Curves"
+  )+
+  geom_hline(aes(yintercept = 0))+
+  geom_vline(aes(xintercept = 0))+
+  xlim(0, 300)+
+  ylim(0, 250)+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
