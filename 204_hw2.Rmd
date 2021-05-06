@@ -15,6 +15,10 @@ library(janitor)
 ```
 # Part 1: Marginal abatement costs
 
+Note: For this analysis, the following terms are used synonymously:
+x = Q
+y = P
+
 ## Read in the data & exploratory viz
 
 ```{r}
@@ -149,6 +153,7 @@ P = 165.27 - 0.597Q
 urban_demand <- function(x) 165.27 - 0.597*x
 ```
 
+
 ## Now plot all the demand curves together
 
 ```{r}
@@ -176,5 +181,168 @@ ggplot()+
   xlim(0, 300)+
   ylim(0, 250)+
   theme(plot.title = element_text(hjust = 0.5))
+```
+
+# Part 3: Baja California Policy Options
+
+### 3b)
+
+Found the aggregate demand curve by solving for Q for each of the Ag, Meat, and Industrial sectors, then adding those three equations together. We end up with this:
+
+```{r}
+aggr_demand <- function(x) (x/-5.51) + 109.83
+```
+
+
+Make a graph of the three sectors, plus their aggregate demand curve
+```{r}
+ggplot()+
+  stat_function(fun = ag_demand,
+                color = "red")+
+  stat_function(fun = industrial_demand,
+                color = "blue")+
+  stat_function(fun = meat_demand,
+                color = "forestgreen")+
+  stat_function(fun = aggr_demand,
+                color = "purple",
+                size = 2)+
+  annotate("text", x = 400, y = 225, color = "red", label = "Agriculture: P = 88.696 - 0.510Q")+
+  annotate("text", x = 400, y = 210, color = "blue", label = "Industrial: P = 233.093 - 1.13Q")+
+  annotate("text", x = 400, y = 195, color = "forestgreen", label = "Meat: P = 84.48 - 0.375Q")+
+  annotate("text", x = 400, y = 180, color = "purple", label = "Aggregate Demand: P = 109.83 - 0.181Q")+
+  theme_bw()+
+  labs(
+    y = "Price ($)",
+    x = "Water Use (AF)",
+    title = "Demand Curves for Baja California"
+  )+
+  geom_hline(aes(yintercept = 0))+
+  geom_vline(aes(xintercept = 0))+
+  xlim(0, 600)+
+  ylim(0, 250)+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+### 3c)
+Found the aggregate marginal cost curve by solving for Q for each of the Ag, Meat, and Industrial sectors, then adding those three equations together. We end up with this:
+
+```{r}
+aggr_mc <- function(x) 0.18*x + 0.97
+```
+
+Make a graph of the three sectors, plus their aggregate marginal cost curve
+
+```{r}
+ggplot(data = water_data, aes(x = reduced_water_use_abatement))+
+  stat_function(fun = ag_function,
+                color = "red")+
+  stat_function(fun = industrial_function,
+                color = "blue")+
+  stat_function(fun = meat_function,
+                color = "forestgreen")+
+  stat_function(fun = aggr_mc,
+                color = "purple",
+                size = 2)+
+  annotate("text", x = 100, y = 140, color = "red", label = "Agriculture: 0.51035*x + 1.93603")+
+  annotate("text", x = 100, y = 130, color = "blue", label = "Industrial: 1.13009*x - 26.80662")+
+  annotate("text", x = 100, y = 120, color = "forestgreen", label = "Meat: 0.37534*x + 9.4808")+
+  annotate("text", x = 100, y = 110, color = "purple", label = "Aggregate Marginal Cost: 0.18*x + 0.97")+
+  theme_bw()+
+  labs(
+    y = "Marginal Cost of Abatement ($/AF)",
+    x = "Reduction in Water Use (AF)",
+    title = "Marginal Cost Curves in Baja California"
+  )+
+  geom_hline(aes(yintercept = 0))+
+  geom_vline(aes(xintercept = 0))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylim(0, 150)+
+  xlim(0, 350)
+  
+```
+
+# Part 4: BCS & BC Cap and Trade Together
+
+Solve each marginal cost curve for Q for all four sectors, add those equations together to get the aggregate demand curve for all four sectors.
+
+```{r}
+aggr_mc_foursectors <- function(x) 0.14*x - 2.48
+
+# Now put all four of these sectors on the graph, plus the aggregate marginal cost curve of all four.
+
+ggplot(data = water_data, aes(x = reduced_water_use_abatement))+
+  stat_function(fun = ag_function,
+                color = "red")+
+  stat_function(fun = industrial_function,
+                color = "blue")+
+  stat_function(fun = meat_function,
+                color = "forestgreen")+
+  stat_function(fun = urban_function,
+                color = "coral")+
+  stat_function(fun = aggr_mc_foursectors,
+                color = "purple",
+                size = 2)+
+  annotate("text", x = 75, y = 140, color = "red", label = "Agriculture: 0.51035*x + 1.93603")+
+  annotate("text", x = 75, y = 130, color = "blue", label = "Industrial: 1.13009*x - 26.80662")+
+  annotate("text", x = 75, y = 120, color = "forestgreen", label = "Meat: 0.37534*x + 9.4808")+
+  annotate("text", x = 75, y = 110, color = "coral", label = "Urban: 0.59713*x - 13.82868")+
+  annotate("text", x = 90, y = 100, color = "purple", label = "Agg MC Curve (4sectors): 0.14*x - 2.48")+
+  theme_bw()+
+  labs(
+    y = "Marginal Cost of Abatement ($/AF)",
+    x = "Reduction in Water Use (AF)",
+    title = "Marginal Cost Curves (BC + BCS)"
+  )+
+  geom_hline(aes(yintercept = 0))+
+  geom_vline(aes(xintercept = 0))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylim(0, 150)+
+  xlim(0, 350)
+
+```
+
+
+
+
+
+# Part 5: Ecosystem services
+
+
+```{r}
+# Marginal Cost curve plus added $10 of ecosystem degradation at each AF.
+
+aggr_mc_ecosystem <- function(x) 0.18*x + 0.97 + 10
+
+# Now graph it
+
+ggplot(data = water_data, aes(x = reduced_water_use_abatement))+
+  stat_function(fun = ag_function,
+                color = "red")+
+  stat_function(fun = industrial_function,
+                color = "blue")+
+  stat_function(fun = meat_function,
+                color = "forestgreen")+
+  stat_function(fun = aggr_mc,
+                color = "purple")+
+  stat_function(fun = aggr_mc_ecosystem,
+                color = "orange",
+                size = 2)+
+  annotate("text", x = 100, y = 140, color = "red", label = "Agriculture: 0.51035*x + 1.93603")+
+  annotate("text", x = 100, y = 130, color = "blue", label = "Industrial: 1.13009*x - 26.80662")+
+  annotate("text", x = 100, y = 120, color = "forestgreen", label = "Meat: 0.37534*x + 9.4808")+
+  annotate("text", x = 100, y = 110, color = "purple", label = "Aggregate Marginal Cost: 0.18*x + 0.97")+
+  annotate("text", x = 100, y = 100, color = "orange", label = "Agg. MC & Ecosystem Services: 0.18*x + 0.97 + 10")+
+  theme_bw()+
+  labs(
+    y = "Marginal Cost of Abatement ($/AF)",
+    x = "Reduction in Water Use (AF)",
+    title = "Marginal Cost Curves in Baja California"
+  )+
+  geom_hline(aes(yintercept = 0))+
+  geom_vline(aes(xintercept = 0))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylim(0, 150)+
+  xlim(0, 350)
+  
 ```
 
